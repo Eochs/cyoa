@@ -80,11 +80,20 @@ var defaultHandlerTemplate = `
   </body>
 </html>`
 
-func NewHandler(s Story, t *template.Template) http.Handler {
-	if t == nil {
-		t = tmpl
+type HandlerOption func(h *handler)
+
+func WithTemplate(t *template.Template) HandlerOption {
+	return func(h *handler) {
+		h.t = t
 	}
-	return handler{s, t}
+}
+
+func NewHandler(s Story, opts ...HandlerOption) http.Handler {
+	h := handler{s, tmpl} //default global template
+	for _, opt := range opts {
+		opt(&h)
+	}
+	return h
 }
 
 type handler struct {
