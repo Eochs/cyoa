@@ -80,12 +80,16 @@ var defaultHandlerTemplate = `
   </body>
 </html>`
 
-func NewHandler(s Story) http.Handler {
-	return handler{s}
+func NewHandler(s Story, t *template.Template) http.Handler {
+	if t == nil {
+		t = tmpl
+	}
+	return handler{s, t}
 }
 
 type handler struct {
 	s Story
+	t *template.Template
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -125,6 +129,6 @@ type Chapter struct {
 }
 
 type Option struct {
-	Text    string `json:"text,omitempty"`
-	Chapter string `json:"chapter,omitempty"`
+	Text    string `json:"text"`
+	Chapter string `json:"chapter"`
 }
