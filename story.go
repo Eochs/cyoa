@@ -6,15 +6,16 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func init() {
-	tmpl = template.Must(template.New("").Parse(defaultHandlerTemplate))
+	tmpl = template.Must(template.New("").Parse(defaultHandlerTmpl))
 }
 
 var tmpl *template.Template
 
-var defaultHandlerTemplate = `
+var defaultHandlerTmpl = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -95,7 +96,7 @@ func WithPathFn(fn func(r *http.Request) string) HandlerOption {
 }
 
 func NewHandler(s Story, opts ...HandlerOption) http.Handler {
-	h := handler{s, tmpl, defaultPathFn} //default global template
+	h := handler{s, tmpl, defaultPathFn}
 	for _, opt := range opts {
 		opt(&h)
 	}
@@ -109,7 +110,7 @@ type handler struct {
 }
 
 func defaultPathFn(r *http.Request) string {
-	path := r.URL.Path
+	path := strings.TrimSpace(r.URL.Path)
 	if path == "" || path == "/" {
 		path = "/intro"
 	}
@@ -118,15 +119,16 @@ func defaultPathFn(r *http.Request) string {
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := h.pathFn(r)
+
 	if chapter, ok := h.s[path]; ok {
 		err := h.t.Execute(w, chapter)
 		if err != nil {
 			log.Printf("%v", err)
-			http.Error(w, "Sommething went wrong...", http.StatusInternalServerError)
+			http.Error(w, "Something went wrong...", http.StatusInternalServerError)
 		}
 		return
 	}
-	http.Error(w, "Chapter could not be found", http.StatusNotFound)
+	http.Error(w, "Chapter not found.", http.StatusNotFound)
 }
 
 func JsonStory(r io.Reader) (Story, error) {
@@ -148,5 +150,5 @@ type Chapter struct {
 
 type Option struct {
 	Text    string `json:"text"`
-	Chapter string `json:"chapter"`
+	Chapter string `json:"arc"`
 }
